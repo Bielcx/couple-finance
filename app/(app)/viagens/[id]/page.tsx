@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, PartyPopper, Plane, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { calculateBalance, formatCurrency } from "@/lib/utils";
 import { toggleTripStatus, deleteTrip } from "../actions";
@@ -40,12 +41,16 @@ export default async function ViagemDetailPage({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <Link href="/viagens" className="text-xs text-muted/70 hover:text-white">
-          ← Viagens
+        <Link href="/viagens" className="flex items-center gap-1 text-xs text-muted/70 hover:text-white">
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Viagens
         </Link>
         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">🧳 {currentTrip.name}</h1>
+            <h1 className="flex items-center gap-2 text-2xl font-semibold">
+              <Plane className="h-6 w-6 text-primary" />
+              {currentTrip.name}
+            </h1>
             {currentTrip.destination && (
               <p className="text-sm text-muted">{currentTrip.destination}</p>
             )}
@@ -68,10 +73,10 @@ export default async function ViagemDetailPage({
             <form action={deleteTrip.bind(null, id)}>
               <button
                 type="submit"
-                className="rounded-full px-2 py-1.5 text-xs text-muted/70 hover:text-expense"
+                className="rounded-full p-1.5 text-muted/70 hover:text-expense"
                 title="Excluir viagem"
               >
-                ✕
+                <X className="h-3.5 w-3.5" />
               </button>
             </form>
           </div>
@@ -88,7 +93,10 @@ export default async function ViagemDetailPage({
           <div className="rounded-3xl border border-border bg-surface p-4">
             <p className="text-xs text-muted">Acerto de contas</p>
             {balance === 0 ? (
-              <p className="mt-1 text-lg font-semibold">Tudo quitado 🎉</p>
+              <p className="flex items-center gap-2 text-lg font-semibold">
+                <PartyPopper className="h-5 w-5 text-income" />
+                Tudo quitado
+              </p>
             ) : balance > 0 ? (
               <p className="mt-1 text-lg font-semibold">
                 {allProfiles[1].name} deve {formatCurrency(balance)} para {allProfiles[0].name}
@@ -189,10 +197,10 @@ export default async function ViagemDetailPage({
                     <form action={deleteTripExpense.bind(null, id, expense.id)}>
                       <button
                         type="submit"
-                        className="rounded-full px-2 py-1.5 text-xs text-muted/70 hover:text-expense"
+                        className="rounded-full p-1.5 text-muted/70 hover:text-expense"
                         title="Excluir"
                       >
-                        ✕
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </form>
                   </div>

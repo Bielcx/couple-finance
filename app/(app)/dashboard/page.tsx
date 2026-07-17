@@ -8,7 +8,9 @@ import {
   pastMonthRefs,
   shortMonthLabel,
 } from "@/lib/utils";
+import { PartyPopper } from "lucide-react";
 import { BalanceChart, type BalancePoint } from "@/components/balance-chart";
+import { CategoryIcon } from "@/components/category-icon";
 import type {
   Category,
   FixedExpense,
@@ -202,7 +204,10 @@ export default async function DashboardPage() {
         <div className="rounded-3xl border border-border bg-surface p-5">
           <h2 className="mb-2 text-sm font-medium text-muted">Saldo entre vocês</h2>
           {balance === 0 ? (
-            <p className="text-lg font-semibold">Contas equilibradas 🎉</p>
+            <p className="flex items-center gap-2 text-lg font-semibold">
+              <PartyPopper className="h-5 w-5 text-income" />
+              Contas equilibradas
+            </p>
           ) : balance > 0 ? (
             <p className="text-lg font-semibold">
               {allProfiles[1].name} deve {formatCurrency(balance)} para {allProfiles[0].name}
@@ -235,8 +240,9 @@ export default async function DashboardPage() {
           <ul className="flex flex-col gap-2">
             {categoryRows.map(({ category, total }) => (
               <li key={category?.id ?? "sem-categoria"} className="flex items-center justify-between text-sm">
-                <span>
-                  {category?.icon ?? "❓"} {category?.name ?? "Sem categoria"}
+                <span className="flex items-center gap-2">
+                  <CategoryIcon icon={category?.icon} className="h-4 w-4 text-muted" />
+                  {category?.name ?? "Sem categoria"}
                 </span>
                 <span className="font-medium">{formatCurrency(total)}</span>
               </li>

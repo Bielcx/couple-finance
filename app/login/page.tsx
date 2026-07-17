@@ -1,3 +1,4 @@
+import { PiggyBank } from "lucide-react";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -16,7 +17,10 @@ export default async function LoginPage({
         />
 
         <div className="rounded-3xl border border-border bg-surface p-8 shadow-glow">
-          <h1 className="mb-1 text-2xl font-semibold tracking-tight">Couple Finance 💸</h1>
+          <h1 className="mb-1 flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            <PiggyBank className="h-6 w-6 text-primary" />
+            Couple Finance
+          </h1>
           <p className="mb-6 text-sm text-muted">
             Entre com sua conta para acessar as finanças do casal.
           </p>

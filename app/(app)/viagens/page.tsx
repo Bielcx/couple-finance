@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plane } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 import { createTrip } from "./actions";
@@ -73,7 +74,10 @@ export default async function ViagensPage() {
                 className="rounded-3xl border border-border bg-surface p-5 transition hover:border-primary hover:shadow-glow"
               >
                 <div className="mb-2 flex items-center justify-between">
-                  <h3 className="font-medium">🧳 {trip.name}</h3>
+                  <h3 className="flex items-center gap-2 font-medium">
+                    <Plane className="h-4 w-4 text-primary" />
+                    {trip.name}
+                  </h3>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs ${
                       trip.status === "open"

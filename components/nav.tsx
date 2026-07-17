@@ -2,15 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  CreditCard,
+  LayoutDashboard,
+  LogOut,
+  PiggyBank,
+  Plane,
+  Receipt,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import { logout } from "@/app/login/actions";
 import { BeamDivider } from "./beam-divider";
 
-const links = [
-  { href: "/dashboard", label: "Dashboard", short: "Início", icon: "📊" },
-  { href: "/renda-fixa", label: "Renda Fixa", short: "Renda", icon: "💼" },
-  { href: "/gastos-fixos", label: "Gastos Fixos", short: "Fixos", icon: "🧾" },
-  { href: "/transacoes", label: "Transações", short: "Trans.", icon: "💳" },
-  { href: "/viagens", label: "Viagens", short: "Viagens", icon: "🧳" },
+const links: { href: string; label: string; short: string; Icon: LucideIcon }[] = [
+  { href: "/dashboard", label: "Dashboard", short: "Início", Icon: LayoutDashboard },
+  { href: "/renda-fixa", label: "Renda Fixa", short: "Renda", Icon: Wallet },
+  { href: "/gastos-fixos", label: "Gastos Fixos", short: "Fixos", Icon: Receipt },
+  { href: "/transacoes", label: "Transações", short: "Trans.", Icon: CreditCard },
+  { href: "/viagens", label: "Viagens", short: "Viagens", Icon: Plane },
 ];
 
 export function Nav() {
@@ -21,7 +31,10 @@ export function Nav() {
       {/* Topo: sempre visível. Nav horizontal só aparece em telas sm+ */}
       <header className="sticky top-0 z-20 bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <span className="text-lg font-semibold tracking-tight">Couple Finance 💸</span>
+          <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <PiggyBank className="h-5 w-5 text-primary" />
+            Couple Finance
+          </span>
 
           <nav className="hidden items-center gap-1 sm:flex">
             {links.map((link) => {
@@ -44,8 +57,9 @@ export function Nav() {
             <form action={logout}>
               <button
                 type="submit"
-                className="ml-2 rounded-full px-3.5 py-1.5 text-sm text-muted transition hover:bg-surface-hover hover:text-expense"
+                className="ml-2 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm text-muted transition hover:bg-surface-hover hover:text-expense"
               >
+                <LogOut className="h-4 w-4" />
                 Sair
               </button>
             </form>
@@ -56,9 +70,9 @@ export function Nav() {
               type="submit"
               aria-label="Sair"
               title="Sair"
-              className="rounded-full p-2.5 text-lg text-muted transition hover:bg-surface-hover hover:text-expense"
+              className="rounded-full p-2.5 text-muted transition hover:bg-surface-hover hover:text-expense"
             >
-              🚪
+              <LogOut className="h-5 w-5" />
             </button>
           </form>
         </div>
@@ -81,7 +95,7 @@ export function Nav() {
                   active ? "text-primary" : "text-muted"
                 }`}
               >
-                <span className="text-lg leading-none">{link.icon}</span>
+                <link.Icon className="h-5 w-5" />
                 {link.short}
               </Link>
             );

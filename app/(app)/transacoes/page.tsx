@@ -1,5 +1,7 @@
+import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { currentMonthRef, formatCurrency } from "@/lib/utils";
+import { CategoryIcon } from "@/components/category-icon";
 import { createTransaction, deleteTransaction } from "./actions";
 import type { Category, Profile, Transaction } from "@/lib/types";
 
@@ -69,7 +71,7 @@ export default async function TransacoesPage() {
             <option value="">Categoria</option>
             {allCategories.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.icon} {c.name}
+                {c.name}
               </option>
             ))}
           </select>
@@ -123,8 +125,9 @@ export default async function TransacoesPage() {
               return (
                 <li key={t.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-medium">
-                      {category?.icon ?? "💰"} {t.description}
+                    <p className="flex items-center gap-2 font-medium">
+                      <CategoryIcon icon={category?.icon} className="h-4 w-4 text-muted" />
+                      {t.description}
                     </p>
                     <p className="text-xs text-muted">
                       {new Date(t.occurred_on).toLocaleDateString("pt-BR")} · {person?.name ?? "?"}
@@ -144,10 +147,10 @@ export default async function TransacoesPage() {
                     <form action={deleteTransaction.bind(null, t.id)}>
                       <button
                         type="submit"
-                        className="rounded-full px-2 py-1.5 text-xs text-muted/70 hover:text-expense"
+                        className="rounded-full p-1.5 text-muted/70 hover:text-expense"
                         title="Excluir"
                       >
-                        ✕
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </form>
                   </div>
