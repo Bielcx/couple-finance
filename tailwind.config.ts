@@ -8,12 +8,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0b0d12",
-        surface: "#151821",
-        border: "#232735",
-        primary: "#6366f1",
+        background: "#0a0712",
+        surface: "#160f24",
+        "surface-hover": "#1e1533",
+        border: "#2a2044",
+        primary: "#8b5cf6",
+        "primary-hover": "#7c3aed",
         income: "#22c55e",
-        expense: "#ef4444",
+        expense: "#f43f5e",
+        muted: "#a394c4",
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        glow: "0 0 0 1px rgba(139, 92, 246, 0.18), 0 8px 28px -6px rgba(139, 92, 246, 0.55)",
       },
     },
   },

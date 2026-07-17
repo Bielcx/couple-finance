@@ -184,7 +184,7 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold capitalize">{monthLabel(monthRef)}</h1>
-        <p className="text-sm text-slate-400">Visão geral das finanças do casal</p>
+        <p className="text-sm text-muted">Visão geral das finanças do casal</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -199,8 +199,8 @@ export default async function DashboardPage() {
       </div>
 
       {allProfiles.length === 2 && (
-        <div className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="mb-2 text-sm font-medium text-slate-400">Saldo entre vocês</h2>
+        <div className="rounded-3xl border border-border bg-surface p-5">
+          <h2 className="mb-2 text-sm font-medium text-muted">Saldo entre vocês</h2>
           {balance === 0 ? (
             <p className="text-lg font-semibold">Contas equilibradas 🎉</p>
           ) : balance > 0 ? (
@@ -213,7 +213,7 @@ export default async function DashboardPage() {
             </p>
           )}
 
-          <p className="mb-2 mt-6 text-xs text-slate-500">
+          <p className="mb-2 mt-6 text-xs text-muted/70">
             Evolução do saldo nos últimos 6 meses — a linha tracejada é o ponto de
             equilíbrio (ninguém deve nada para ninguém)
           </p>
@@ -221,16 +221,16 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-border bg-surface p-5">
+      <div className="rounded-3xl border border-border bg-surface p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-slate-400">Gastos por categoria</h2>
-          <span className="text-xs text-slate-500">
+          <h2 className="text-sm font-medium text-muted">Gastos por categoria</h2>
+          <span className="text-xs text-muted/70">
             {paidCount}/{allFixed.length} gastos fixos pagos
           </span>
         </div>
 
         {categoryRows.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhum gasto lançado neste mês ainda.</p>
+          <p className="text-sm text-muted/70">Nenhum gasto lançado neste mês ainda.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {categoryRows.map(({ category, total }) => (
@@ -258,8 +258,8 @@ function Card({
   tone: "income" | "expense";
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4">
-      <p className="text-xs text-slate-400">{label}</p>
+    <div className="rounded-3xl border border-border bg-surface p-4">
+      <p className="text-xs text-muted">{label}</p>
       <p className={`mt-1 text-lg font-semibold ${tone === "income" ? "text-income" : "text-expense"}`}>
         {value}
       </p>

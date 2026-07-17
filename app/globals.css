@@ -3,10 +3,39 @@
 @tailwind utilities;
 
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background-image:
+    radial-gradient(ellipse 70% 45% at 50% -8%, rgba(139, 92, 246, 0.22), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 90% 10%, rgba(124, 58, 237, 0.12), transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 ::selection {
   background: theme("colors.primary");
   color: white;
+}
+
+/* Astra-style soft center-lit beam divider */
+.beam-divider {
+  position: relative;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(139, 92, 246, 0.5) 50%,
+    transparent
+  );
+}
+
+.beam-divider::after {
+  content: "";
+  position: absolute;
+  inset: -6px 0 auto 0;
+  height: 13px;
+  background: radial-gradient(
+    ellipse 40% 100% at 50% 50%,
+    rgba(139, 92, 246, 0.35),
+    transparent 70%
+  );
 }
