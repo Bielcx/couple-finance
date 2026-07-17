@@ -82,7 +82,7 @@ export default async function RendaFixaPage() {
           </select>
           <button
             type="submit"
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover sm:col-span-1"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover active:scale-[0.97] sm:col-span-1"
           >
             Adicionar
           </button>
@@ -97,14 +97,18 @@ export default async function RendaFixaPage() {
           </p>
         ) : (
           <ul className="divide-y divide-border">
-            {allIncomes.map((income) => {
+            {allIncomes.map((income, i) => {
               const receipt = allReceipts.find((r) => r.fixed_income_id === income.id);
               const received = receipt?.received ?? false;
               const category = allCategories.find((c) => c.id === income.category_id);
               const owner = allProfiles.find((p) => p.id === income.profile_id);
 
               return (
-                <li key={income.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <li
+                  key={income.id}
+                  className="fade-in-up flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
                   <div>
                     <p className="flex items-center gap-2 font-medium">
                       <CategoryIcon icon={category?.icon} className="h-4 w-4 text-muted" />
@@ -123,7 +127,7 @@ export default async function RendaFixaPage() {
                     <form action={toggleReceipt.bind(null, income.id, received)}>
                       <button
                         type="submit"
-                        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
                           received
                             ? "bg-income/20 text-income hover:bg-income/30"
                             : "bg-border text-white/80 hover:bg-surface-hover"
@@ -137,7 +141,7 @@ export default async function RendaFixaPage() {
                     <form action={deactivateFixedIncome.bind(null, income.id)}>
                       <button
                         type="submit"
-                        className="rounded-full p-1.5 text-muted/70 hover:text-expense"
+                        className="rounded-full p-1.5 text-muted/70 transition hover:text-expense active:scale-90"
                         title="Desativar"
                       >
                         <X className="h-3.5 w-3.5" />

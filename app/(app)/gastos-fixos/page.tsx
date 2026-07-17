@@ -98,7 +98,7 @@ export default async function GastosFixosPage() {
           />
           <button
             type="submit"
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover sm:col-span-1"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover active:scale-[0.97] sm:col-span-1"
           >
             Adicionar
           </button>
@@ -110,14 +110,18 @@ export default async function GastosFixosPage() {
           <p className="p-5 text-sm text-muted/70">Nenhum gasto fixo cadastrado ainda.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {allFixed.map((f) => {
+            {allFixed.map((f, i) => {
               const payment = allPayments.find((p) => p.fixed_expense_id === f.id);
               const paid = payment?.paid ?? false;
               const category = allCategories.find((c) => c.id === f.category_id);
               const responsible = allProfiles.find((p) => p.id === f.responsible_id);
 
               return (
-                <li key={f.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <li
+                  key={f.id}
+                  className="fade-in-up flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
                   <div>
                     <p className="flex items-center gap-2 font-medium">
                       <CategoryIcon icon={category?.icon} className="h-4 w-4 text-muted" />
@@ -142,7 +146,7 @@ export default async function GastosFixosPage() {
                     >
                       <button
                         type="submit"
-                        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
                           paid
                             ? "bg-income/20 text-income hover:bg-income/30"
                             : "bg-border text-white/80 hover:bg-surface-hover"
@@ -156,7 +160,7 @@ export default async function GastosFixosPage() {
                     <form action={deactivateFixedExpense.bind(null, f.id)}>
                       <button
                         type="submit"
-                        className="rounded-full p-1.5 text-muted/70 hover:text-expense"
+                        className="rounded-full p-1.5 text-muted/70 transition hover:text-expense active:scale-90"
                         title="Desativar"
                       >
                         <X className="h-3.5 w-3.5" />

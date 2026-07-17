@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, PartyPopper, Plane, X } from "lucide-react";
+import { AnimatedNumber } from "@/components/animated-number";
 import { createClient } from "@/lib/supabase/server";
 import { calculateBalance, formatCurrency } from "@/lib/utils";
 import { toggleTripStatus, deleteTrip } from "../actions";
@@ -60,7 +61,7 @@ export default async function ViagemDetailPage({
             <form action={toggleTripStatus.bind(null, id, currentTrip.status === "open")}>
               <button
                 type="submit"
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
                   currentTrip.status === "open"
                     ? "bg-income/20 text-income hover:bg-income/30"
                     : "bg-border text-white/80 hover:bg-surface-hover"
@@ -73,7 +74,7 @@ export default async function ViagemDetailPage({
             <form action={deleteTrip.bind(null, id)}>
               <button
                 type="submit"
-                className="rounded-full p-1.5 text-muted/70 hover:text-expense"
+                className="rounded-full p-1.5 text-muted/70 transition hover:text-expense active:scale-90"
                 title="Excluir viagem"
               >
                 <X className="h-3.5 w-3.5" />
@@ -84,13 +85,15 @@ export default async function ViagemDetailPage({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-3xl border border-border bg-surface p-4">
+        <div className="fade-in-up rounded-3xl border border-border bg-surface p-4">
           <p className="text-xs text-muted">Total gasto na viagem</p>
-          <p className="mt-1 text-lg font-semibold">{formatCurrency(total)}</p>
+          <p className="mt-1 text-lg font-semibold">
+            <AnimatedNumber value={total} />
+          </p>
         </div>
 
         {allProfiles.length === 2 && (
-          <div className="rounded-3xl border border-border bg-surface p-4">
+          <div className="fade-in-up rounded-3xl border border-border bg-surface p-4" style={{ animationDelay: "60ms" }}>
             <p className="text-xs text-muted">Acerto de contas</p>
             {balance === 0 ? (
               <p className="flex items-center gap-2 text-lg font-semibold">
@@ -99,11 +102,11 @@ export default async function ViagemDetailPage({
               </p>
             ) : balance > 0 ? (
               <p className="mt-1 text-lg font-semibold">
-                {allProfiles[1].name} deve {formatCurrency(balance)} para {allProfiles[0].name}
+                {allProfiles[1].name} deve <AnimatedNumber value={balance} /> para {allProfiles[0].name}
               </p>
             ) : (
               <p className="mt-1 text-lg font-semibold">
-                {allProfiles[0].name} deve {formatCurrency(-balance)} para {allProfiles[1].name}
+                {allProfiles[0].name} deve <AnimatedNumber value={-balance} /> para {allProfiles[1].name}
               </p>
             )}
           </div>
@@ -164,7 +167,7 @@ export default async function ViagemDetailPage({
           />
           <button
             type="submit"
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover sm:col-span-1"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover active:scale-[0.97] sm:col-span-1"
           >
             Adicionar
           </button>
@@ -176,11 +179,15 @@ export default async function ViagemDetailPage({
           <p className="p-5 text-sm text-muted/70">Nenhum gasto lançado nessa viagem ainda.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {allExpenses.map((expense) => {
+            {allExpenses.map((expense, i) => {
               const person = allProfiles.find((p) => p.id === expense.paid_by);
 
               return (
-                <li key={expense.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <li
+                  key={expense.id}
+                  className="fade-in-up flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
                   <div>
                     <p className="font-medium">{expense.description}</p>
                     <p className="text-xs text-muted">
@@ -197,7 +204,7 @@ export default async function ViagemDetailPage({
                     <form action={deleteTripExpense.bind(null, id, expense.id)}>
                       <button
                         type="submit"
-                        className="rounded-full p-1.5 text-muted/70 hover:text-expense"
+                        className="rounded-full p-1.5 text-muted/70 transition hover:text-expense active:scale-90"
                         title="Excluir"
                       >
                         <X className="h-3.5 w-3.5" />

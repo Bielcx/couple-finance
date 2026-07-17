@@ -106,7 +106,7 @@ export default async function TransacoesPage() {
           />
           <button
             type="submit"
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover sm:col-span-1"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover active:scale-[0.97] sm:col-span-1"
           >
             Adicionar
           </button>
@@ -118,12 +118,16 @@ export default async function TransacoesPage() {
           <p className="p-5 text-sm text-muted/70">Nenhuma transação lançada neste mês ainda.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {allTransactions.map((t) => {
+            {allTransactions.map((t, i) => {
               const category = allCategories.find((c) => c.id === t.category_id);
               const person = allProfiles.find((p) => p.id === t.paid_by);
 
               return (
-                <li key={t.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <li
+                  key={t.id}
+                  className="fade-in-up flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
                   <div>
                     <p className="flex items-center gap-2 font-medium">
                       <CategoryIcon icon={category?.icon} className="h-4 w-4 text-muted" />
@@ -147,7 +151,7 @@ export default async function TransacoesPage() {
                     <form action={deleteTransaction.bind(null, t.id)}>
                       <button
                         type="submit"
-                        className="rounded-full p-1.5 text-muted/70 hover:text-expense"
+                        className="rounded-full p-1.5 text-muted/70 transition hover:text-expense active:scale-90"
                         title="Excluir"
                       >
                         <X className="h-3.5 w-3.5" />

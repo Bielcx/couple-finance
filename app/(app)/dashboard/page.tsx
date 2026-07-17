@@ -9,6 +9,7 @@ import {
   shortMonthLabel,
 } from "@/lib/utils";
 import { PartyPopper } from "lucide-react";
+import { AnimatedNumber } from "@/components/animated-number";
 import { BalanceChart, type BalancePoint } from "@/components/balance-chart";
 import { CategoryIcon } from "@/components/category-icon";
 import type {
@@ -190,18 +191,14 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card label="Receitas" value={formatCurrency(totalIncome)} tone="income" />
-        <Card label="Gastos fixos" value={formatCurrency(totalFixed)} tone="expense" />
-        <Card label="Gastos variáveis" value={formatCurrency(totalVariable)} tone="expense" />
-        <Card
-          label="Saldo do mês"
-          value={formatCurrency(saldo)}
-          tone={saldo >= 0 ? "income" : "expense"}
-        />
+        <Card index={0} label="Receitas" value={totalIncome} tone="income" />
+        <Card index={1} label="Gastos fixos" value={totalFixed} tone="expense" />
+        <Card index={2} label="Gastos variáveis" value={totalVariable} tone="expense" />
+        <Card index={3} label="Saldo do mês" value={saldo} tone={saldo >= 0 ? "income" : "expense"} />
       </div>
 
       {allProfiles.length === 2 && (
-        <div className="rounded-3xl border border-border bg-surface p-5">
+        <div className="fade-in-up rounded-3xl border border-border bg-surface p-5" style={{ animationDelay: "160ms" }}>
           <h2 className="mb-2 text-sm font-medium text-muted">Saldo entre vocês</h2>
           {balance === 0 ? (
             <p className="flex items-center gap-2 text-lg font-semibold">
@@ -210,11 +207,11 @@ export default async function DashboardPage() {
             </p>
           ) : balance > 0 ? (
             <p className="text-lg font-semibold">
-              {allProfiles[1].name} deve {formatCurrency(balance)} para {allProfiles[0].name}
+              {allProfiles[1].name} deve <AnimatedNumber value={balance} /> para {allProfiles[0].name}
             </p>
           ) : (
             <p className="text-lg font-semibold">
-              {allProfiles[0].name} deve {formatCurrency(-balance)} para {allProfiles[1].name}
+              {allProfiles[0].name} deve <AnimatedNumber value={-balance} /> para {allProfiles[1].name}
             </p>
           )}
 
@@ -226,7 +223,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="rounded-3xl border border-border bg-surface p-5">
+      <div className="fade-in-up rounded-3xl border border-border bg-surface p-5" style={{ animationDelay: "220ms" }}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-medium text-muted">Gastos por categoria</h2>
           <span className="text-xs text-muted/70">
@@ -238,8 +235,12 @@ export default async function DashboardPage() {
           <p className="text-sm text-muted/70">Nenhum gasto lançado neste mês ainda.</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {categoryRows.map(({ category, total }) => (
-              <li key={category?.id ?? "sem-categoria"} className="flex items-center justify-between text-sm">
+            {categoryRows.map(({ category, total }, i) => (
+              <li
+                key={category?.id ?? "sem-categoria"}
+                className="fade-in-up flex items-center justify-between text-sm"
+                style={{ animationDelay: `${260 + i * 40}ms` }}
+              >
                 <span className="flex items-center gap-2">
                   <CategoryIcon icon={category?.icon} className="h-4 w-4 text-muted" />
                   {category?.name ?? "Sem categoria"}
@@ -255,19 +256,24 @@ export default async function DashboardPage() {
 }
 
 function Card({
+  index,
   label,
   value,
   tone,
 }: {
+  index: number;
   label: string;
-  value: string;
+  value: number;
   tone: "income" | "expense";
 }) {
   return (
-    <div className="rounded-3xl border border-border bg-surface p-4">
+    <div
+      className="fade-in-up rounded-3xl border border-border bg-surface p-4 transition hover:-translate-y-0.5 hover:shadow-glow"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
       <p className="text-xs text-muted">{label}</p>
       <p className={`mt-1 text-lg font-semibold ${tone === "income" ? "text-income" : "text-expense"}`}>
-        {value}
+        <AnimatedNumber value={value} />
       </p>
     </div>
   );

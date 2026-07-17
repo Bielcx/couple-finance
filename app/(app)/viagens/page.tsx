@@ -51,7 +51,7 @@ export default async function ViagensPage() {
           />
           <button
             type="submit"
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover sm:col-span-2 md:col-span-4"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover active:scale-[0.97] sm:col-span-2 md:col-span-4"
           >
             Criar viagem
           </button>
@@ -62,7 +62,7 @@ export default async function ViagensPage() {
         <p className="text-sm text-muted/70">Nenhuma viagem cadastrada ainda.</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {allTrips.map((trip) => {
+          {allTrips.map((trip, i) => {
             const total = allExpenses
               .filter((e) => e.trip_id === trip.id)
               .reduce((sum, e) => sum + e.amount, 0);
@@ -71,7 +71,8 @@ export default async function ViagensPage() {
               <Link
                 key={trip.id}
                 href={`/viagens/${trip.id}`}
-                className="rounded-3xl border border-border bg-surface p-5 transition hover:border-primary hover:shadow-glow"
+                className="fade-in-up rounded-3xl border border-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-primary hover:shadow-glow"
+                style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="mb-2 flex items-center justify-between">
                   <h3 className="flex items-center gap-2 font-medium">
