@@ -1,21 +1,28 @@
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthRef, formatCurrency } from "@/lib/utils";
+import { currentMonthRef, formatCurrency, monthLabel, monthRangeBounds, resolveMonthRef } from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
+import { MonthNav } from "@/components/month-nav";
 import { createTransaction, deleteTransaction } from "./actions";
 import type { Category, Profile, Transaction } from "@/lib/types";
 
-export default async function TransacoesPage() {
+export default async function TransacoesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
+  const { mes } = await searchParams;
   const supabase = await createClient();
-  const monthRef = currentMonthRef();
-  const [year, month] = monthRef.split("-").map(Number);
-  const monthEnd = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+  const monthRef = resolveMonthRef(mes);
+  const { start: monthStart, end: monthEnd } = monthRangeBounds(monthRef);
+  // se estiver vendo o mês atual, novo lançamento parte de hoje; senão, do 1º dia do mês visualizado
+  const defaultDate = monthRef === currentMonthRef() ? new Date().toISOString().slice(0, 10) : monthRef;
 
   const [{ data: transactions }, { data: categories }, { data: profiles }] = await Promise.all([
     supabase
       .from("transactions")
       .select("*")
-      .gte("occurred_on", monthRef)
+      .gte("occurred_on", monthStart)
       .lt("occurred_on", monthEnd)
       .order("occurred_on", { ascending: false }),
     supabase.from("categories").select("*"),
@@ -28,9 +35,12 @@ export default async function TransacoesPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Transações</h1>
-        <p className="text-sm text-muted">Gastos variáveis e receitas do mês</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Transações</h1>
+          <p className="text-sm text-muted capitalize">{monthLabel(monthRef)}</p>
+        </div>
+        <MonthNav month={monthRef} basePath="/transacoes" />
       </div>
 
       <div className="rounded-3xl border border-border bg-surface p-5">
@@ -61,7 +71,7 @@ export default async function TransacoesPage() {
           <input
             name="occurred_on"
             type="date"
-            defaultValue={new Date().toISOString().slice(0, 10)}
+            defaultValue={defaultDate}
             className="rounded-3xl border border-border bg-background px-4 py-2.5 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow"
           />
           <select

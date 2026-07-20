@@ -29,6 +29,11 @@ Divisão de gastos (`split_type`, usada em `fixed_expenses`, `transactions` e
 todo, sem dividir) ou `custom` (percentual definido — o campo "% pessoa 1" ao lado
 define quanto da conta a primeira pessoa cadastrada paga; o resto fica com a segunda).
 
+Dashboard, Gastos Fixos, Renda Fixa e Transações têm um seletor de mês
+(`?mes=YYYY-MM` na URL) — cada mês fica isolado: marcar um gasto fixo como pago ou
+lançar uma transação afeta só o mês que está sendo visualizado, sem misturar com
+outros meses.
+
 ## Setup
 
 ### 1. Criar projeto no Supabase
@@ -74,6 +79,7 @@ app/
     viagens/[id]/      → gastos de uma viagem específica + acerto de contas
 components/
   nav.tsx              → navegação principal
+  month-nav.tsx        → seletor de mês (anterior/próximo) usado no dashboard e nas listagens
   balance-chart.tsx    → gráfico de linha do saldo (recharts)
 lib/
   supabase/            → clientes Supabase (browser, server, middleware)

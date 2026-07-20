@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthRef } from "@/lib/utils";
 import type { SplitType } from "@/lib/types";
 
 export async function createFixedExpense(formData: FormData) {
@@ -39,9 +38,13 @@ export async function deactivateFixedExpense(id: string) {
   revalidatePath("/dashboard");
 }
 
-export async function togglePayment(fixedExpenseId: string, paidByProfileId: string, currentlyPaid: boolean) {
+export async function togglePayment(
+  fixedExpenseId: string,
+  paidByProfileId: string,
+  currentlyPaid: boolean,
+  month_ref: string
+) {
   const supabase = await createClient();
-  const month_ref = currentMonthRef();
 
   if (currentlyPaid) {
     await supabase

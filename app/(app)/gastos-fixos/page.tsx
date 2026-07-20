@@ -1,13 +1,19 @@
 import { Check, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthRef, formatCurrency } from "@/lib/utils";
+import { formatCurrency, monthLabel, resolveMonthRef } from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
+import { MonthNav } from "@/components/month-nav";
 import { createFixedExpense, deactivateFixedExpense, togglePayment } from "./actions";
 import type { Category, FixedExpense, FixedExpensePayment, Profile } from "@/lib/types";
 
-export default async function GastosFixosPage() {
+export default async function GastosFixosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
+  const { mes } = await searchParams;
   const supabase = await createClient();
-  const monthRef = currentMonthRef();
+  const monthRef = resolveMonthRef(mes);
 
   const [{ data: fixedExpenses }, { data: payments }, { data: categories }, { data: profiles }] =
     await Promise.all([
@@ -24,11 +30,14 @@ export default async function GastosFixosPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Gastos Fixos</h1>
-        <p className="text-sm text-muted">
-          Contas recorrentes do mês — aluguel, internet, assinaturas...
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Gastos Fixos</h1>
+          <p className="text-sm text-muted capitalize">
+            {monthLabel(monthRef)} — aluguel, internet, assinaturas...
+          </p>
+        </div>
+        <MonthNav month={monthRef} basePath="/gastos-fixos" />
       </div>
 
       <div className="rounded-3xl border border-border bg-surface p-5">
@@ -141,7 +150,8 @@ export default async function GastosFixosPage() {
                         null,
                         f.id,
                         responsible?.id ?? allProfiles[0]?.id ?? "",
-                        paid
+                        paid,
+                        monthRef
                       )}
                     >
                       <button
