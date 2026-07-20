@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthRef } from "@/lib/utils";
 
 export async function createFixedIncome(formData: FormData) {
   const supabase = await createClient();
@@ -32,9 +31,12 @@ export async function deactivateFixedIncome(id: string) {
   revalidatePath("/dashboard");
 }
 
-export async function toggleReceipt(fixedIncomeId: string, currentlyReceived: boolean) {
+export async function toggleReceipt(
+  fixedIncomeId: string,
+  currentlyReceived: boolean,
+  month_ref: string
+) {
   const supabase = await createClient();
-  const month_ref = currentMonthRef();
 
   if (currentlyReceived) {
     await supabase

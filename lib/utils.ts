@@ -31,19 +31,53 @@ export function monthRangeBounds(monthRef: string): { start: string; end: string
 }
 
 /**
- * Retorna os `n` meses anteriores ao mês atual (não inclui o mês atual),
+ * Retorna os `n` meses anteriores a `referenceMonthRef` (não o inclui),
  * em ordem cronológica (do mais antigo para o mais recente).
+ * Se `referenceMonthRef` não for informado, usa o mês atual.
  */
-export function pastMonthRefs(n: number): string[] {
-  const now = new Date();
+export function pastMonthRefs(n: number, referenceMonthRef?: string): string[] {
+  const [refYear, refMonth] = referenceMonthRef
+    ? referenceMonthRef.split("-").map(Number)
+    : (() => {
+        const now = new Date();
+        return [now.getFullYear(), now.getMonth() + 1];
+      })();
+
   const months: string[] = [];
 
   for (let i = n; i >= 1; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const date = new Date(refYear, refMonth - 1 - i, 1);
     months.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`);
   }
 
   return months;
+}
+
+/**
+ * Desloca um month_ref em `delta` meses (positivo = futuro, negativo = passado).
+ */
+export function shiftMonthRef(monthRef: string, delta: number): string {
+  const [year, month] = monthRef.split("-").map(Number);
+  const date = new Date(year, month - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+/**
+ * Lê o parâmetro de mês da URL (?mes=YYYY-MM ou YYYY-MM-01) e normaliza.
+ * Se ausente ou inválido, retorna o mês atual.
+ */
+export function resolveMonthRef(param: string | string[] | undefined): string {
+  const value = Array.isArray(param) ? param[0] : param;
+
+  if (value && /^\d{4}-\d{2}$/.test(value)) {
+    return `${value}-01`;
+  }
+
+  if (value && /^\d{4}-\d{2}-01$/.test(value)) {
+    return value;
+  }
+
+  return currentMonthRef();
 }
 
 /**

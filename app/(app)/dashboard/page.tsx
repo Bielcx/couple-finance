@@ -1,17 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import {
   calculateBalance,
-  currentMonthRef,
   formatCurrency,
   monthLabel,
   monthRangeBounds,
   pastMonthRefs,
+  resolveMonthRef,
   shortMonthLabel,
 } from "@/lib/utils";
 import { PartyPopper } from "lucide-react";
 import { AnimatedNumber } from "@/components/animated-number";
 import { BalanceChart, type BalancePoint } from "@/components/balance-chart";
 import { CategoryIcon } from "@/components/category-icon";
+import { MonthNav } from "@/components/month-nav";
 import type {
   Category,
   FixedExpense,
@@ -22,11 +23,16 @@ import type {
   Transaction,
 } from "@/lib/types";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
+  const { mes } = await searchParams;
   const supabase = await createClient();
-  const monthRef = currentMonthRef();
+  const monthRef = resolveMonthRef(mes);
   const { start: monthStart, end: monthEnd } = monthRangeBounds(monthRef);
-  const historyMonths = pastMonthRefs(5); // 5 meses anteriores + o atual = 6 pontos no gráfico
+  const historyMonths = pastMonthRefs(5, monthRef); // 5 meses anteriores + o selecionado = 6 pontos no gráfico
   const historyStart = historyMonths[0];
 
   const [
@@ -185,9 +191,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold capitalize">{monthLabel(monthRef)}</h1>
-        <p className="text-sm text-muted">Visão geral das finanças do casal</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold capitalize">{monthLabel(monthRef)}</h1>
+          <p className="text-sm text-muted">Visão geral das finanças do casal</p>
+        </div>
+        <MonthNav month={monthRef} basePath="/dashboard" />
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -216,10 +225,10 @@ export default async function DashboardPage() {
           )}
 
           <p className="mb-2 mt-6 text-xs text-muted/70">
-            Evolução do saldo nos últimos 6 meses — a linha tracejada é o ponto de
-            equilíbrio (ninguém deve nada para ninguém)
+            Evolução do saldo até <span className="capitalize">{monthLabel(monthRef)}</span> — o ponto em
+            destaque é o mês selecionado, a linha tracejada é o equilíbrio
           </p>
-          <BalanceChart data={balanceHistory} />
+          <BalanceChart data={balanceHistory} selectedMonth={shortMonthLabel(monthRef)} />
         </div>
       )}
 

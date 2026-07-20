@@ -1,13 +1,19 @@
 import { Check, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthRef, formatCurrency } from "@/lib/utils";
+import { formatCurrency, monthLabel, resolveMonthRef } from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
+import { MonthNav } from "@/components/month-nav";
 import { createFixedIncome, deactivateFixedIncome, toggleReceipt } from "./actions";
 import type { Category, FixedIncome, FixedIncomeReceipt, Profile } from "@/lib/types";
 
-export default async function RendaFixaPage() {
+export default async function RendaFixaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
+  const { mes } = await searchParams;
   const supabase = await createClient();
-  const monthRef = currentMonthRef();
+  const monthRef = resolveMonthRef(mes);
 
   const [{ data: fixedIncomes }, { data: receipts }, { data: categories }, { data: profiles }] =
     await Promise.all([
@@ -24,11 +30,14 @@ export default async function RendaFixaPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Renda Fixa</h1>
-        <p className="text-sm text-muted">
-          Salário e outras receitas recorrentes de vocês dois
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Renda Fixa</h1>
+          <p className="text-sm text-muted capitalize">
+            {monthLabel(monthRef)} — salário e outras receitas recorrentes
+          </p>
+        </div>
+        <MonthNav month={monthRef} basePath="/renda-fixa" />
       </div>
 
       <div className="rounded-3xl border border-border bg-surface p-5">
@@ -124,7 +133,7 @@ export default async function RendaFixaPage() {
                       +{formatCurrency(income.amount)}
                     </span>
 
-                    <form action={toggleReceipt.bind(null, income.id, received)}>
+                    <form action={toggleReceipt.bind(null, income.id, received, monthRef)}>
                       <button
                         type="submit"
                         className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
