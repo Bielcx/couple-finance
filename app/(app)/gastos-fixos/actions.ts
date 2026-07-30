@@ -31,6 +31,28 @@ export async function createFixedExpense(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+export async function updateFixedExpense(id: string, formData: FormData) {
+  const supabase = await createClient();
+
+  await supabase
+    .from("fixed_expenses")
+    .update({
+      name: formData.get("name") as string,
+      amount: Number(formData.get("amount")),
+      due_day: Number(formData.get("due_day")),
+      category_id: (formData.get("category_id") as string) || null,
+      responsible_id: (formData.get("responsible_id") as string) || null,
+      split_type: formData.get("split_type") as SplitType,
+      split_percent_a: formData.get("split_percent_a")
+        ? Number(formData.get("split_percent_a"))
+        : null,
+    })
+    .eq("id", id);
+
+  revalidatePath("/gastos-fixos");
+  revalidatePath("/dashboard");
+}
+
 export async function deactivateFixedExpense(id: string) {
   const supabase = await createClient();
   await supabase.from("fixed_expenses").update({ active: false }).eq("id", id);

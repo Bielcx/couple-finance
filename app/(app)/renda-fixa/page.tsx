@@ -1,9 +1,22 @@
-import { Check, X } from "lucide-react";
+import { Check, Pencil, Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, monthLabel, resolveMonthRef } from "@/lib/utils";
+import {
+  buttonClass,
+  daysUntilDue,
+  formatCurrency,
+  inputClass,
+  monthLabel,
+  resolveMonthRef,
+} from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
 import { MonthNav } from "@/components/month-nav";
-import { createFixedIncome, deactivateFixedIncome, toggleReceipt } from "./actions";
+import { SummaryBar } from "@/components/summary-bar";
+import {
+  createFixedIncome,
+  deactivateFixedIncome,
+  toggleReceipt,
+  updateFixedIncome,
+} from "./actions";
 import type { Category, FixedIncome, FixedIncomeReceipt, Profile } from "@/lib/types";
 
 export default async function RendaFixaPage({
@@ -28,8 +41,39 @@ export default async function RendaFixaPage({
   const allCategories = (categories ?? []) as Category[];
   const allProfiles = (profiles ?? []) as Profile[];
 
+  const rows = allIncomes.map((income) => {
+    const receipt = allReceipts.find((r) => r.fixed_income_id === income.id);
+    return {
+      income,
+      amount: receipt?.amount_override ?? income.amount,
+      received: receipt?.received ?? false,
+      days: daysUntilDue(income.receive_day, monthRef),
+      category: allCategories.find((c) => c.id === income.category_id),
+      owner: allProfiles.find((p) => p.id === income.profile_id),
+    };
+  });
+
+  const total = rows.reduce((sum, r) => sum + r.amount, 0);
+  const receivedRows = rows.filter((r) => r.received);
+  const receivedTotal = receivedRows.reduce((sum, r) => sum + r.amount, 0);
+
+  const pending = rows.filter((r) => !r.received);
+  const groups = [
+    {
+      title: "Chega essa semana",
+      rows: pending.filter((r) => r.days !== null && r.days <= 7),
+      highlight: true,
+    },
+    {
+      title: "A receber",
+      rows: pending.filter((r) => r.days === null || r.days > 7),
+      highlight: false,
+    },
+    { title: "Recebidos", rows: receivedRows, highlight: false },
+  ].filter((g) => g.rows.length > 0);
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Renda Fixa</h1>
@@ -40,129 +84,196 @@ export default async function RendaFixaPage({
         <MonthNav month={monthRef} basePath="/renda-fixa" />
       </div>
 
-      <div className="rounded-3xl border border-border bg-surface p-5">
-        <h2 className="mb-4 text-sm font-medium text-muted">Nova renda fixa</h2>
-        <form action={createFixedIncome} className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-          <input
-            name="name"
-            required
-            placeholder="Nome (ex: Salário)"
-            className="rounded-3xl border border-border bg-background px-4 py-2.5 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow sm:col-span-1"
-          />
-          <input
-            name="amount"
-            type="number"
-            step="0.01"
-            required
-            placeholder="Valor"
-            className="rounded-3xl border border-border bg-background px-4 py-2.5 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow"
-          />
-          <input
-            name="receive_day"
-            type="number"
-            min={1}
-            max={31}
-            required
-            placeholder="Dia do recebimento"
-            className="rounded-3xl border border-border bg-background px-4 py-2.5 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow"
-          />
-          <select
-            name="category_id"
-            className="rounded-3xl border border-border bg-background px-4 py-2.5 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow"
-          >
-            <option value="">Categoria</option>
-            {allCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          <select
-            name="profile_id"
-            required
-            className="rounded-3xl border border-border bg-background px-4 py-2.5 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow sm:col-span-1"
-          >
-            <option value="">Quem recebe</option>
-            {allProfiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover active:scale-[0.97] sm:col-span-1"
-          >
+      <SummaryBar
+        total={total}
+        done={receivedTotal}
+        doneCount={receivedRows.length}
+        totalCount={rows.length}
+        doneLabel="Já recebido"
+        pendingLabel="Falta receber"
+        tone="income"
+      />
+
+      <details className="group rounded-3xl border border-border bg-surface">
+        <summary className="flex cursor-pointer list-none items-center gap-2 p-4 text-sm font-medium text-muted transition hover:text-white">
+          <Plus className="h-4 w-4 transition group-open:rotate-45" />
+          Nova renda fixa
+        </summary>
+        <form
+          action={createFixedIncome}
+          className="grid grid-cols-1 gap-3 border-t border-border p-5 sm:grid-cols-2 md:grid-cols-3"
+        >
+          <IncomeFields categories={allCategories} profiles={allProfiles} />
+          <button type="submit" className={buttonClass}>
             Adicionar
           </button>
         </form>
-      </div>
+      </details>
 
-      <div className="rounded-3xl border border-border bg-surface">
-        {allIncomes.length === 0 ? (
-          <p className="p-5 text-sm text-muted/70">
-            Nenhuma renda fixa cadastrada ainda. Cadastre o salário de vocês aqui para ele
-            entrar automaticamente no dashboard todo mês.
-          </p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {allIncomes.map((income, i) => {
-              const receipt = allReceipts.find((r) => r.fixed_income_id === income.id);
-              const received = receipt?.received ?? false;
-              const category = allCategories.find((c) => c.id === income.category_id);
-              const owner = allProfiles.find((p) => p.id === income.profile_id);
+      {rows.length === 0 ? (
+        <p className="rounded-3xl border border-border bg-surface p-5 text-sm text-muted/70">
+          Nenhuma renda fixa cadastrada ainda. Cadastre o salário de vocês aqui para ele entrar
+          automaticamente no dashboard todo mês.
+        </p>
+      ) : (
+        groups.map((group) => (
+          <section key={group.title} className="flex flex-col gap-2">
+            <h2
+              className={`px-1 text-xs font-medium uppercase tracking-wide ${
+                group.highlight ? "text-income" : "text-muted"
+              }`}
+            >
+              {group.title} · {group.rows.length}
+            </h2>
 
-              return (
+            <ul className="divide-y divide-border overflow-hidden rounded-3xl border border-border bg-surface">
+              {group.rows.map((row, i) => (
                 <li
-                  key={income.id}
-                  className="fade-in-up flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  key={row.income.id}
+                  className="fade-in-up p-4"
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
-                  <div>
-                    <p className="flex items-center gap-2 font-medium">
-                      <CategoryIcon icon={category?.icon} className="h-4 w-4 text-muted" />
-                      {income.name}
-                    </p>
-                    <p className="text-xs text-muted">
-                      Recebe dia {income.receive_day} · {owner?.name ?? "sem responsável"}
-                    </p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="flex items-center gap-2 font-medium">
+                        <CategoryIcon icon={row.category?.icon} className="h-4 w-4 text-muted" />
+                        {row.income.name}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {receiveLabel(row.income.receive_day, row.days, row.received)} ·{" "}
+                        {row.owner?.name ?? "sem responsável"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-income">
+                        +{formatCurrency(row.amount)}
+                      </span>
+
+                      <form
+                        action={toggleReceipt.bind(null, row.income.id, row.received, monthRef)}
+                      >
+                        <button
+                          type="submit"
+                          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
+                            row.received
+                              ? "bg-income/20 text-income hover:bg-income/30"
+                              : "bg-border text-white/80 hover:bg-surface-hover"
+                          }`}
+                        >
+                          {row.received && <Check className="h-3.5 w-3.5" />}
+                          {row.received ? "Recebido" : "Marcar como recebido"}
+                        </button>
+                      </form>
+
+                      <form action={deactivateFixedIncome.bind(null, row.income.id)}>
+                        <button
+                          type="submit"
+                          className="rounded-full p-1.5 text-muted/70 transition hover:text-expense active:scale-90"
+                          title="Desativar"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </form>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-income">
-                      +{formatCurrency(income.amount)}
-                    </span>
-
-                    <form action={toggleReceipt.bind(null, income.id, received, monthRef)}>
-                      <button
-                        type="submit"
-                        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
-                          received
-                            ? "bg-income/20 text-income hover:bg-income/30"
-                            : "bg-border text-white/80 hover:bg-surface-hover"
-                        }`}
-                      >
-                        {received && <Check className="h-3.5 w-3.5" />}
-                        {received ? "Recebido" : "Marcar como recebido"}
+                  <details className="mt-2">
+                    <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 text-xs text-muted/60 transition hover:text-white">
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </summary>
+                    <form
+                      action={updateFixedIncome.bind(null, row.income.id)}
+                      className="mt-3 grid grid-cols-1 gap-3 rounded-2xl bg-background/50 p-4 sm:grid-cols-2 md:grid-cols-3"
+                    >
+                      <IncomeFields
+                        categories={allCategories}
+                        profiles={allProfiles}
+                        income={row.income}
+                      />
+                      <button type="submit" className={buttonClass}>
+                        Salvar
                       </button>
                     </form>
-
-                    <form action={deactivateFixedIncome.bind(null, income.id)}>
-                      <button
-                        type="submit"
-                        className="rounded-full p-1.5 text-muted/70 transition hover:text-expense active:scale-90"
-                        title="Desativar"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </form>
-                  </div>
+                  </details>
                 </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+              ))}
+            </ul>
+          </section>
+        ))
+      )}
     </div>
   );
+}
+
+/** Campos compartilhados entre criar e editar. */
+function IncomeFields({
+  categories,
+  profiles,
+  income,
+}: {
+  categories: Category[];
+  profiles: Profile[];
+  income?: FixedIncome;
+}) {
+  return (
+    <>
+      <input
+        name="name"
+        required
+        defaultValue={income?.name}
+        placeholder="Nome (ex: Salário)"
+        className={inputClass}
+      />
+      <input
+        name="amount"
+        type="number"
+        step="0.01"
+        required
+        defaultValue={income?.amount}
+        placeholder="Valor"
+        className={inputClass}
+      />
+      <input
+        name="receive_day"
+        type="number"
+        min={1}
+        max={31}
+        required
+        defaultValue={income?.receive_day}
+        placeholder="Dia do recebimento"
+        className={inputClass}
+      />
+      <select name="category_id" defaultValue={income?.category_id ?? ""} className={inputClass}>
+        <option value="">Categoria</option>
+        {categories.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+      <select
+        name="profile_id"
+        required
+        defaultValue={income?.profile_id ?? ""}
+        className={inputClass}
+      >
+        <option value="">Quem recebe</option>
+        {profiles.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+}
+
+function receiveLabel(day: number, days: number | null, received: boolean): string {
+  if (received || days === null) return `Recebe dia ${day}`;
+  if (days < 0) return `Era dia ${day} — ainda não caiu`;
+  if (days === 0) return "Cai hoje";
+  if (days === 1) return "Cai amanhã";
+  return `Cai em ${days} dias`;
 }

@@ -24,6 +24,24 @@ export async function createFixedIncome(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+export async function updateFixedIncome(id: string, formData: FormData) {
+  const supabase = await createClient();
+
+  await supabase
+    .from("fixed_incomes")
+    .update({
+      name: formData.get("name") as string,
+      amount: Number(formData.get("amount")),
+      receive_day: Number(formData.get("receive_day")),
+      category_id: (formData.get("category_id") as string) || null,
+      profile_id: formData.get("profile_id") as string,
+    })
+    .eq("id", id);
+
+  revalidatePath("/renda-fixa");
+  revalidatePath("/dashboard");
+}
+
 export async function deactivateFixedIncome(id: string) {
   const supabase = await createClient();
   await supabase.from("fixed_incomes").update({ active: false }).eq("id", id);
