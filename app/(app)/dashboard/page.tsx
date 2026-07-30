@@ -9,6 +9,7 @@ import {
   shortMonthLabel,
 } from "@/lib/utils";
 import { PartyPopper } from "lucide-react";
+import { AiInsights } from "@/components/ai-insights";
 import { AnimatedNumber } from "@/components/animated-number";
 import { BalanceChart, type BalancePoint } from "@/components/balance-chart";
 import { CategoryIcon } from "@/components/category-icon";
@@ -189,6 +190,39 @@ export default async function DashboardPage({
     }))
     .sort((a, b) => b.total - a.total);
 
+  // resumo em texto que alimenta as recomendações da IA
+  const savingsRate = totalIncome > 0 ? (saldo / totalIncome) * 100 : 0;
+  const historyLine = balanceHistory
+    .map((p) => `${p.month}: ${formatCurrency(p.saldo)}`)
+    .join(", ");
+
+  const aiSummary = [
+    `Mês de referência: ${monthLabel(monthRef)}.`,
+    `Receitas: ${formatCurrency(totalIncome)} (renda fixa ${formatCurrency(
+      totalFixedIncome
+    )}, avulsas ${formatCurrency(totalTransactionIncome)}).`,
+    `Gastos fixos: ${formatCurrency(totalFixed)} (${paidCount} de ${allFixed.length} já pagos).`,
+    `Gastos variáveis: ${formatCurrency(totalVariable)} em ${
+      allTransactions.filter((t) => t.type === "expense").length
+    } lançamentos.`,
+    `Total de gastos: ${formatCurrency(totalExpenses)}.`,
+    `Saldo do mês: ${formatCurrency(saldo)} (${savingsRate.toFixed(0)}% da receita).`,
+    allProfiles.length === 2
+      ? balance === 0
+        ? "Entre o casal as contas estão equilibradas."
+        : balance > 0
+          ? `${allProfiles[1].name} deve ${formatCurrency(balance)} para ${allProfiles[0].name}.`
+          : `${allProfiles[0].name} deve ${formatCurrency(-balance)} para ${allProfiles[1].name}.`
+      : "",
+    historyLine ? `Histórico do saldo entre o casal: ${historyLine}.` : "",
+    "Gastos por categoria neste mês:",
+    ...categoryRows.map(
+      ({ category, total }) => `- ${category?.name ?? "Sem categoria"}: ${formatCurrency(total)}`
+    ),
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -205,6 +239,8 @@ export default async function DashboardPage({
         <Card index={2} label="Gastos variáveis" value={totalVariable} tone="expense" />
         <Card index={3} label="Saldo do mês" value={saldo} tone={saldo >= 0 ? "income" : "expense"} />
       </div>
+
+      <AiInsights summary={aiSummary} />
 
       {allProfiles.length === 2 && (
         <div className="fade-in-up rounded-3xl border border-border bg-surface p-5" style={{ animationDelay: "160ms" }}>

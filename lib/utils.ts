@@ -7,6 +7,30 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
+// ponytail: classes repetidas em todos os forms — const em vez de componente wrapper
+export const inputClass =
+  "rounded-3xl border border-border bg-background px-4 py-2.5 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow";
+
+export const buttonClass =
+  "rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover active:scale-[0.97]";
+
+/**
+ * Dias até o dia `day` do mês `monthRef`. Negativo = já passou.
+ * Só faz sentido para o mês corrente; nos outros retorna null.
+ */
+export function daysUntilDue(day: number, monthRef: string): number | null {
+  if (monthRef !== currentMonthRef()) return null;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const [year, month] = monthRef.split("-").map(Number);
+  // dia 31 em mês de 30 dias vira o último dia do mês
+  const lastDay = new Date(year, month, 0).getDate();
+  const due = new Date(year, month - 1, Math.min(day, lastDay));
+
+  return Math.round((due.getTime() - today.getTime()) / 86_400_000);
+}
+
 export function currentMonthRef(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
