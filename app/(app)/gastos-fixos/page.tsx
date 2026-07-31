@@ -34,7 +34,7 @@ export default async function GastosFixosPage({
     await Promise.all([
       supabase.from("fixed_expenses").select("*").eq("active", true).order("due_day"),
       supabase.from("fixed_expense_payments").select("*").eq("month_ref", monthRef),
-      supabase.from("categories").select("*").in("kind", ["fixed"]),
+      supabase.from("categories").select("*").in("kind", ["fixed", "variable"]),
       supabase.from("profiles").select("*").order("created_at"),
     ]);
 
