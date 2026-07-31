@@ -1,17 +1,25 @@
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthRef, formatCurrency, monthLabel, monthRangeBounds, resolveMonthRef } from "@/lib/utils";
+import {
+  currentMonthRef,
+  formatCurrency,
+  monthLabel,
+  monthRangeBounds,
+  resolveMonthRef,
+  resolvePersonId,
+} from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
 import { MonthNav } from "@/components/month-nav";
+import { PersonNav } from "@/components/person-nav";
 import { createTransaction, deleteTransaction } from "./actions";
 import type { Category, Profile, Transaction } from "@/lib/types";
 
 export default async function TransacoesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<{ mes?: string; quem?: string }>;
 }) {
-  const { mes } = await searchParams;
+  const { mes, quem } = await searchParams;
   const supabase = await createClient();
   const monthRef = resolveMonthRef(mes);
   const { start: monthStart, end: monthEnd } = monthRangeBounds(monthRef);
@@ -29,9 +37,14 @@ export default async function TransacoesPage({
     supabase.from("profiles").select("*").order("created_at"),
   ]);
 
-  const allTransactions = (transactions ?? []) as Transaction[];
   const allCategories = (categories ?? []) as Category[];
   const allProfiles = (profiles ?? []) as Profile[];
+  const personId = resolvePersonId(quem, allProfiles);
+
+  // ponytail: filtra em memória — são poucos lançamentos por mês
+  const allTransactions = ((transactions ?? []) as Transaction[]).filter(
+    (t) => !personId || t.paid_by === personId
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -40,8 +53,15 @@ export default async function TransacoesPage({
           <h1 className="text-2xl font-semibold">Transações</h1>
           <p className="text-sm text-muted capitalize">{monthLabel(monthRef)}</p>
         </div>
-        <MonthNav month={monthRef} basePath="/transacoes" />
+        <MonthNav month={monthRef} basePath="/transacoes" person={personId} />
       </div>
+
+      <PersonNav
+        profiles={allProfiles}
+        person={personId}
+        month={monthRef}
+        basePath="/transacoes"
+      />
 
       <div className="rounded-3xl border border-border bg-surface p-5">
         <h2 className="mb-4 text-sm font-medium text-muted">Novo lançamento</h2>
@@ -88,6 +108,7 @@ export default async function TransacoesPage({
           <select
             name="paid_by"
             required
+            defaultValue={personId ?? ""}
             className="rounded-3xl border border-border bg-background px-4 py-2.5 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow"
           >
             <option value="">Quem pagou / recebeu</option>
@@ -125,7 +146,13 @@ export default async function TransacoesPage({
 
       <div className="rounded-3xl border border-border bg-surface">
         {allTransactions.length === 0 ? (
-          <p className="p-5 text-sm text-muted/70">Nenhuma transação lançada neste mês ainda.</p>
+          <p className="p-5 text-sm text-muted/70">
+            {personId
+              ? `Nenhuma transação de ${
+                  allProfiles.find((p) => p.id === personId)?.name
+                } neste mês ainda.`
+              : "Nenhuma transação lançada neste mês ainda."}
+          </p>
         ) : (
           <ul className="divide-y divide-border">
             {allTransactions.map((t, i) => {

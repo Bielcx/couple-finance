@@ -10,6 +10,7 @@ import {
   PiggyBank,
   Plane,
   Receipt,
+  Users,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -60,6 +61,17 @@ export function Nav() {
               );
             })}
 
+            <Link
+              href="/perfil"
+              aria-label="Perfis"
+              title="Perfis"
+              className={`rounded-full p-2 transition hover:bg-surface-hover hover:text-white ${
+                pathname === "/perfil" ? "text-primary" : "text-muted"
+              }`}
+            >
+              <Users className="h-4 w-4" />
+            </Link>
+
             <form action={logout}>
               <button
                 type="submit"
@@ -71,16 +83,29 @@ export function Nav() {
             </form>
           </nav>
 
-          <form action={logout} className="sm:hidden">
-            <button
-              type="submit"
-              aria-label="Sair"
-              title="Sair"
-              className="rounded-full p-2.5 text-muted transition hover:bg-surface-hover hover:text-expense active:scale-90"
+          <div className="flex items-center sm:hidden">
+            <Link
+              href="/perfil"
+              aria-label="Perfis"
+              title="Perfis"
+              className={`rounded-full p-2.5 transition hover:bg-surface-hover ${
+                pathname === "/perfil" ? "text-primary" : "text-muted"
+              }`}
             >
-              <LogOut className="h-5 w-5" />
-            </button>
-          </form>
+              <Users className="h-5 w-5" />
+            </Link>
+
+            <form action={logout}>
+              <button
+                type="submit"
+                aria-label="Sair"
+                title="Sair"
+                className="rounded-full p-2.5 text-muted transition hover:bg-surface-hover hover:text-expense active:scale-90"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+            </form>
+          </div>
         </div>
         <BeamDivider />
       </header>

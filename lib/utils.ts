@@ -105,6 +105,32 @@ export function resolveMonthRef(param: string | string[] | undefined): string {
 }
 
 /**
+ * Lê o parâmetro de pessoa da URL (?quem=<profile.id>).
+ * Se ausente ou desconhecido, retorna null = visão do casal (os dois juntos).
+ */
+export function resolvePersonId(
+  param: string | string[] | undefined,
+  profiles: Profile[]
+): string | null {
+  const value = Array.isArray(param) ? param[0] : param;
+  return value && profiles.some((p) => p.id === value) ? value : null;
+}
+
+/**
+ * Monta o href de uma página preservando mês e pessoa selecionados.
+ */
+export function pageHref(
+  basePath: string,
+  params: { mes?: string; quem?: string | null }
+): string {
+  const query = new URLSearchParams();
+  if (params.mes) query.set("mes", params.mes.slice(0, 7));
+  if (params.quem) query.set("quem", params.quem);
+  const qs = query.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
+}
+
+/**
  * Calcula quanto cada pessoa deve pagar de um gasto, dado o tipo de divisão.
  * `profileAId` é considerado o "profile A" para split_type = 'custom'.
  */

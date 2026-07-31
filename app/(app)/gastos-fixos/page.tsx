@@ -7,9 +7,11 @@ import {
   inputClass,
   monthLabel,
   resolveMonthRef,
+  resolvePersonId,
 } from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
 import { MonthNav } from "@/components/month-nav";
+import { PersonNav } from "@/components/person-nav";
 import { SummaryBar } from "@/components/summary-bar";
 import {
   createFixedExpense,
@@ -22,9 +24,9 @@ import type { Category, FixedExpense, FixedExpensePayment, Profile } from "@/lib
 export default async function GastosFixosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<{ mes?: string; quem?: string }>;
 }) {
-  const { mes } = await searchParams;
+  const { mes, quem } = await searchParams;
   const supabase = await createClient();
   const monthRef = resolveMonthRef(mes);
 
@@ -36,10 +38,15 @@ export default async function GastosFixosPage({
       supabase.from("profiles").select("*").order("created_at"),
     ]);
 
-  const allFixed = (fixedExpenses ?? []) as FixedExpense[];
   const allPayments = (payments ?? []) as FixedExpensePayment[];
   const allCategories = (categories ?? []) as Category[];
   const allProfiles = (profiles ?? []) as Profile[];
+  const personId = resolvePersonId(quem, allProfiles);
+
+  // ponytail: filtra em memória — são poucos gastos fixos
+  const allFixed = ((fixedExpenses ?? []) as FixedExpense[]).filter(
+    (f) => !personId || f.responsible_id === personId
+  );
 
   const rows = allFixed.map((f) => {
     const payment = allPayments.find((p) => p.fixed_expense_id === f.id);
@@ -78,8 +85,15 @@ export default async function GastosFixosPage({
             {monthLabel(monthRef)} — aluguel, internet, assinaturas...
           </p>
         </div>
-        <MonthNav month={monthRef} basePath="/gastos-fixos" />
+        <MonthNav month={monthRef} basePath="/gastos-fixos" person={personId} />
       </div>
+
+      <PersonNav
+        profiles={allProfiles}
+        person={personId}
+        month={monthRef}
+        basePath="/gastos-fixos"
+      />
 
       <SummaryBar
         total={total}
@@ -110,7 +124,11 @@ export default async function GastosFixosPage({
 
       {rows.length === 0 ? (
         <p className="rounded-3xl border border-border bg-surface p-5 text-sm text-muted/70">
-          Nenhum gasto fixo cadastrado ainda.
+          {personId
+            ? `Nenhum gasto fixo sob responsabilidade de ${
+                allProfiles.find((p) => p.id === personId)?.name
+              }.`
+            : "Nenhum gasto fixo cadastrado ainda."}
         </p>
       ) : (
         groups.map((group) => (

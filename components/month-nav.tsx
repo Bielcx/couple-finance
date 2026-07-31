@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { currentMonthRef, monthLabel, shiftMonthRef } from "@/lib/utils";
+import { currentMonthRef, monthLabel, pageHref, shiftMonthRef } from "@/lib/utils";
 
-export function MonthNav({ month, basePath }: { month: string; basePath: string }) {
+export function MonthNav({
+  month,
+  basePath,
+  person = null,
+}: {
+  month: string;
+  basePath: string;
+  person?: string | null;
+}) {
   const prev = shiftMonthRef(month, -1);
   const next = shiftMonthRef(month, 1);
   const isCurrent = month === currentMonthRef();
@@ -10,7 +18,7 @@ export function MonthNav({ month, basePath }: { month: string; basePath: string 
   return (
     <div className="flex items-center gap-1">
       <Link
-        href={`${basePath}?mes=${prev.slice(0, 7)}`}
+        href={pageHref(basePath, { mes: prev, quem: person })}
         aria-label="Mês anterior"
         className="rounded-full p-2 text-muted transition hover:bg-surface-hover hover:text-white active:scale-90"
       >
@@ -22,7 +30,7 @@ export function MonthNav({ month, basePath }: { month: string; basePath: string 
       </span>
 
       <Link
-        href={`${basePath}?mes=${next.slice(0, 7)}`}
+        href={pageHref(basePath, { mes: next, quem: person })}
         aria-label="Próximo mês"
         className="rounded-full p-2 text-muted transition hover:bg-surface-hover hover:text-white active:scale-90"
       >
@@ -31,7 +39,7 @@ export function MonthNav({ month, basePath }: { month: string; basePath: string 
 
       {!isCurrent && (
         <Link
-          href={basePath}
+          href={pageHref(basePath, { quem: person })}
           className="ml-1 rounded-full bg-border px-3 py-1.5 text-xs text-white/80 transition hover:bg-surface-hover active:scale-95"
         >
           Hoje

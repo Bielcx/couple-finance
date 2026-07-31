@@ -7,9 +7,11 @@ import {
   inputClass,
   monthLabel,
   resolveMonthRef,
+  resolvePersonId,
 } from "@/lib/utils";
 import { CategoryIcon } from "@/components/category-icon";
 import { MonthNav } from "@/components/month-nav";
+import { PersonNav } from "@/components/person-nav";
 import { SummaryBar } from "@/components/summary-bar";
 import {
   createFixedIncome,
@@ -22,9 +24,9 @@ import type { Category, FixedIncome, FixedIncomeReceipt, Profile } from "@/lib/t
 export default async function RendaFixaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<{ mes?: string; quem?: string }>;
 }) {
-  const { mes } = await searchParams;
+  const { mes, quem } = await searchParams;
   const supabase = await createClient();
   const monthRef = resolveMonthRef(mes);
 
@@ -36,10 +38,15 @@ export default async function RendaFixaPage({
       supabase.from("profiles").select("*").order("created_at"),
     ]);
 
-  const allIncomes = (fixedIncomes ?? []) as FixedIncome[];
   const allReceipts = (receipts ?? []) as FixedIncomeReceipt[];
   const allCategories = (categories ?? []) as Category[];
   const allProfiles = (profiles ?? []) as Profile[];
+  const personId = resolvePersonId(quem, allProfiles);
+
+  // ponytail: filtra em memória — são poucas rendas fixas
+  const allIncomes = ((fixedIncomes ?? []) as FixedIncome[]).filter(
+    (income) => !personId || income.profile_id === personId
+  );
 
   const rows = allIncomes.map((income) => {
     const receipt = allReceipts.find((r) => r.fixed_income_id === income.id);
@@ -81,8 +88,15 @@ export default async function RendaFixaPage({
             {monthLabel(monthRef)} — salário e outras receitas recorrentes
           </p>
         </div>
-        <MonthNav month={monthRef} basePath="/renda-fixa" />
+        <MonthNav month={monthRef} basePath="/renda-fixa" person={personId} />
       </div>
+
+      <PersonNav
+        profiles={allProfiles}
+        person={personId}
+        month={monthRef}
+        basePath="/renda-fixa"
+      />
 
       <SummaryBar
         total={total}
@@ -112,8 +126,9 @@ export default async function RendaFixaPage({
 
       {rows.length === 0 ? (
         <p className="rounded-3xl border border-border bg-surface p-5 text-sm text-muted/70">
-          Nenhuma renda fixa cadastrada ainda. Cadastre o salário de vocês aqui para ele entrar
-          automaticamente no dashboard todo mês.
+          {personId
+            ? `Nenhuma renda fixa de ${allProfiles.find((p) => p.id === personId)?.name} cadastrada.`
+            : "Nenhuma renda fixa cadastrada ainda. Cadastre o salário de vocês aqui para ele entrar automaticamente no dashboard todo mês."}
         </p>
       ) : (
         groups.map((group) => (
