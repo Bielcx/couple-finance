@@ -170,8 +170,18 @@ export default async function TransacoesPage({
                       <CategoryIcon icon={category?.icon} className="h-4 w-4 text-muted" />
                       {t.description}
                     </p>
-                    <p className="text-xs text-muted">
-                      {new Date(t.occurred_on).toLocaleDateString("pt-BR")} · {person?.name ?? "?"}
+                    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                      {category && (
+                        <span
+                          className="rounded-full px-2 py-0.5 font-medium"
+                          style={{ color: category.color, backgroundColor: `${category.color}1a` }}
+                        >
+                          {category.name}
+                        </span>
+                      )}
+                      <span>
+                        {new Date(t.occurred_on).toLocaleDateString("pt-BR")} · {person?.name ?? "?"}
+                      </span>
                     </p>
                   </div>
 
