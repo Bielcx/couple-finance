@@ -1,6 +1,28 @@
 "use server";
 
 import OpenAI from "openai";
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+
+export async function createSettlement(formData: FormData) {
+  const amount = Number(formData.get("amount"));
+  if (!(amount > 0)) return; // form pode vir com valor vazio/negativo
+
+  const supabase = await createClient();
+  await supabase.from("settlements").insert({
+    month_ref: formData.get("month_ref") as string,
+    paid_by: formData.get("paid_by") as string,
+    amount,
+  });
+
+  revalidatePath("/dashboard");
+}
+
+export async function deleteSettlement(id: string) {
+  const supabase = await createClient();
+  await supabase.from("settlements").delete().eq("id", id);
+  revalidatePath("/dashboard");
+}
 
 const SYSTEM = `Você é um consultor financeiro pessoal conversando com um casal brasileiro que divide as contas.
 

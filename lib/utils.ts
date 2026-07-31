@@ -167,6 +167,21 @@ export function calculateSplit(
  * calcula o saldo líquido entre as duas pessoas.
  * Retorna valor positivo = profileB deve para profileA, negativo = contrário.
  */
+/**
+ * Quanto os acertos já pagos deslocam o saldo do casal.
+ * Mesma convenção do calculateBalance: positivo => B deve para A. Quem
+ * transfere abate a própria dívida, então A pagando empurra o saldo pra cima.
+ */
+export function settledAmount(
+  settlements: Array<{ paid_by: string; amount: number }>,
+  profileAId: string
+): number {
+  return settlements.reduce(
+    (sum, s) => sum + (s.paid_by === profileAId ? s.amount : -s.amount),
+    0
+  );
+}
+
 export function calculateBalance(
   entries: Array<{
     amount: number;

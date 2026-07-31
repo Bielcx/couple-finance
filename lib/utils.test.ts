@@ -6,6 +6,7 @@ import {
   daysUntilDue,
   pageHref,
   resolvePersonId,
+  settledAmount,
   shiftMonthRef,
 } from "./utils.ts";
 import type { Profile } from "./types.ts";
@@ -43,6 +44,26 @@ test("só aceita id de perfil que existe; o resto vira visão do casal", () => {
   assert.equal(resolvePersonId(undefined, profiles), null);
   assert.equal(resolvePersonId("zzz", profiles), null);
   assert.equal(resolvePersonId(["bbb"], profiles), "bbb");
+});
+
+test("acerto abate a dívida de quem transferiu", () => {
+  // saldo +100 = Larissa (bbb) deve 100 pro Gabriel (aaa); ela paga, zera
+  assert.equal(100 + settledAmount([{ paid_by: "bbb", amount: 100 }], "aaa"), 0);
+  // saldo -100 = Gabriel deve 100; ele paga, zera
+  assert.equal(-100 + settledAmount([{ paid_by: "aaa", amount: 100 }], "aaa"), 0);
+  // pagamento parcial e em parcelas somam
+  assert.equal(
+    100 +
+      settledAmount(
+        [
+          { paid_by: "bbb", amount: 40 },
+          { paid_by: "bbb", amount: 30 },
+        ],
+        "aaa"
+      ),
+    30
+  );
+  assert.equal(settledAmount([], "aaa"), 0);
 });
 
 test("href mantém mês e pessoa, e omite o que é padrão", () => {

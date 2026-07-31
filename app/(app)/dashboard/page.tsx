@@ -7,9 +7,11 @@ import {
   pastMonthRefs,
   resolveMonthRef,
   resolvePersonId,
+  settledAmount,
   shortMonthLabel,
 } from "@/lib/utils";
-import { PartyPopper } from "lucide-react";
+import { PartyPopper, X } from "lucide-react";
+import { createSettlement, deleteSettlement } from "./actions";
 import { AiInsights } from "@/components/ai-insights";
 import { AnimatedNumber } from "@/components/animated-number";
 import { BalanceChart, type BalancePoint } from "@/components/balance-chart";
@@ -23,6 +25,7 @@ import type {
   FixedIncome,
   FixedIncomeReceipt,
   Profile,
+  Settlement,
   Transaction,
 } from "@/lib/types";
 
@@ -49,6 +52,7 @@ export default async function DashboardPage({
     { data: allFixedExpensesEver },
     { data: paymentsHistory },
     { data: transactionsHistory },
+    { data: settlements },
   ] = await Promise.all([
     supabase.from("profiles").select("*").order("created_at"),
     supabase.from("categories").select("*"),
@@ -69,6 +73,8 @@ export default async function DashboardPage({
       .eq("type", "expense")
       .gte("occurred_on", historyStart)
       .lt("occurred_on", monthStart),
+    // um único range cobre o mês selecionado e os 5 anteriores do gráfico
+    supabase.from("settlements").select("*").gte("month_ref", historyStart).lte("month_ref", monthRef),
   ]);
 
   const allProfiles = (profiles ?? []) as Profile[];
@@ -122,6 +128,9 @@ export default async function DashboardPage({
   // só faz sentido na visão dos dois juntos
   const showCouple = allProfiles.length === 2 && !personId;
 
+  const allSettlements = (settlements ?? []) as Settlement[];
+  const monthSettlements = allSettlements.filter((s) => s.month_ref === monthRef);
+
   let balance = 0;
   if (showCouple) {
     const [profileA, profileB] = allProfiles;
@@ -145,8 +154,13 @@ export default async function DashboardPage({
         split_percent_a: t.split_percent_a,
       }));
 
-    balance = calculateBalance([...fixedEntries, ...variableEntries], profileA, profileB);
+    balance =
+      calculateBalance([...fixedEntries, ...variableEntries], profileA, profileB) +
+      settledAmount(monthSettlements, profileA.id);
   }
+
+  // centavos de sobra não deixam o card preso em "deve R$ 0,00"
+  const isSettled = Math.abs(balance) < 0.01;
 
   // histórico de saldo (últimos 6 meses, incluindo o atual) para o gráfico
   let balanceHistory: BalancePoint[] = [];
@@ -182,7 +196,12 @@ export default async function DashboardPage({
 
       return {
         month: shortMonthLabel(m),
-        saldo: calculateBalance([...fixedEntries, ...variableEntries], profileA, profileB),
+        saldo:
+          calculateBalance([...fixedEntries, ...variableEntries], profileA, profileB) +
+          settledAmount(
+            allSettlements.filter((s) => s.month_ref === m),
+            profileA.id
+          ),
       };
     });
 
@@ -230,8 +249,10 @@ export default async function DashboardPage({
     `Total de gastos: ${formatCurrency(totalExpenses)}.`,
     `Saldo do mês: ${formatCurrency(saldo)} (${savingsRate.toFixed(0)}% da receita).`,
     showCouple
-      ? balance === 0
-        ? "Entre o casal as contas estão equilibradas."
+      ? isSettled
+        ? monthSettlements.length > 0
+          ? "Entre o casal as contas já foram acertadas neste mês."
+          : "Entre o casal as contas estão equilibradas."
         : balance > 0
           ? `${allProfiles[1].name} deve ${formatCurrency(balance)} para ${allProfiles[0].name}.`
           : `${allProfiles[0].name} deve ${formatCurrency(-balance)} para ${allProfiles[1].name}.`
@@ -277,19 +298,72 @@ export default async function DashboardPage({
       {showCouple && (
         <div className="fade-in-up rounded-3xl border border-border bg-surface p-5" style={{ animationDelay: "160ms" }}>
           <h2 className="mb-2 text-sm font-medium text-muted">Saldo entre vocês</h2>
-          {balance === 0 ? (
+          {isSettled ? (
             <p className="flex items-center gap-2 text-lg font-semibold">
               <PartyPopper className="h-5 w-5 text-income" />
-              Contas equilibradas
-            </p>
-          ) : balance > 0 ? (
-            <p className="text-lg font-semibold">
-              {allProfiles[1].name} deve <AnimatedNumber value={balance} /> para {allProfiles[0].name}
+              {monthSettlements.length > 0 ? "Contas acertadas" : "Contas equilibradas"}
             </p>
           ) : (
-            <p className="text-lg font-semibold">
-              {allProfiles[0].name} deve <AnimatedNumber value={-balance} /> para {allProfiles[1].name}
-            </p>
+            <>
+              <p className="text-lg font-semibold">
+                {(balance > 0 ? allProfiles[1] : allProfiles[0]).name} deve{" "}
+                <AnimatedNumber value={Math.abs(balance)} /> para{" "}
+                {(balance > 0 ? allProfiles[0] : allProfiles[1]).name}
+              </p>
+
+              <form
+                action={createSettlement}
+                className="mt-3 flex flex-wrap items-center gap-2"
+              >
+                <input type="hidden" name="month_ref" value={monthRef} />
+                <input
+                  type="hidden"
+                  name="paid_by"
+                  value={(balance > 0 ? allProfiles[1] : allProfiles[0]).id}
+                />
+                <input
+                  name="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  defaultValue={Math.abs(balance).toFixed(2)}
+                  className="w-32 rounded-3xl border border-border bg-background px-4 py-2 text-sm text-white outline-none transition focus:border-primary focus:shadow-glow"
+                />
+                <button
+                  type="submit"
+                  className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-white shadow-glow transition hover:bg-primary-hover active:scale-[0.97]"
+                >
+                  Registrar acerto
+                </button>
+                <span className="text-xs text-muted/70">
+                  edite o valor se o pagamento foi parcial
+                </span>
+              </form>
+            </>
+          )}
+
+          {monthSettlements.length > 0 && (
+            <ul className="mt-4 flex flex-col gap-1.5 text-xs text-muted">
+              {monthSettlements.map((s) => (
+                <li key={s.id} className="flex items-center gap-2">
+                  <span>
+                    {allProfiles.find((p) => p.id === s.paid_by)?.name ?? "?"} pagou{" "}
+                    {formatCurrency(s.amount)} em{" "}
+                    {new Date(s.settled_at).toLocaleDateString("pt-BR")}
+                  </span>
+                  <form action={deleteSettlement.bind(null, s.id)}>
+                    <button
+                      type="submit"
+                      className="rounded-full p-1 text-muted/70 transition hover:text-expense active:scale-90"
+                      title="Desfazer acerto"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
           )}
 
           <p className="mb-2 mt-6 text-xs text-muted/70">

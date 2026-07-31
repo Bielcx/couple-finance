@@ -76,6 +76,14 @@ export interface Transaction {
   created_at: string;
 }
 
+export interface Settlement {
+  id: string;
+  month_ref: string; // YYYY-MM-01
+  paid_by: string; // quem transferiu
+  amount: number;
+  settled_at: string;
+}
+
 export type TripStatus = "open" | "closed";
 
 export interface Trip {
