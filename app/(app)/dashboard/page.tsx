@@ -6,6 +6,7 @@ import {
   monthRangeBounds,
   pastMonthRefs,
   resolveMonthRef,
+  resolvePersonId,
   shortMonthLabel,
 } from "@/lib/utils";
 import { PartyPopper } from "lucide-react";
@@ -14,6 +15,7 @@ import { AnimatedNumber } from "@/components/animated-number";
 import { BalanceChart, type BalancePoint } from "@/components/balance-chart";
 import { CategoryIcon } from "@/components/category-icon";
 import { MonthNav } from "@/components/month-nav";
+import { PersonNav } from "@/components/person-nav";
 import type {
   Category,
   FixedExpense,
@@ -27,9 +29,9 @@ import type {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string }>;
+  searchParams: Promise<{ mes?: string; quem?: string }>;
 }) {
-  const { mes } = await searchParams;
+  const { mes, quem } = await searchParams;
   const supabase = await createClient();
   const monthRef = resolveMonthRef(mes);
   const { start: monthStart, end: monthEnd } = monthRangeBounds(monthRef);
@@ -71,11 +73,23 @@ export default async function DashboardPage({
 
   const allProfiles = (profiles ?? []) as Profile[];
   const allCategories = (categories ?? []) as Category[];
-  const allFixed = (fixedExpenses ?? []) as FixedExpense[];
   const allPayments = (payments ?? []) as FixedExpensePayment[];
-  const allTransactions = (transactions ?? []) as Transaction[];
-  const allFixedIncomes = (fixedIncomes ?? []) as FixedIncome[];
   const allIncomeReceipts = (incomeReceipts ?? []) as FixedIncomeReceipt[];
+
+  // ponytail: com pessoa selecionada, tudo abaixo passa a olhar só o que é dela.
+  // Filtra em memória — o volume de um mês é pequeno.
+  const personId = resolvePersonId(quem, allProfiles);
+  const person = allProfiles.find((p) => p.id === personId);
+
+  const allFixed = ((fixedExpenses ?? []) as FixedExpense[]).filter(
+    (f) => !personId || f.responsible_id === personId
+  );
+  const allTransactions = ((transactions ?? []) as Transaction[]).filter(
+    (t) => !personId || t.paid_by === personId
+  );
+  const allFixedIncomes = ((fixedIncomes ?? []) as FixedIncome[]).filter(
+    (i) => !personId || i.profile_id === personId
+  );
 
   const totalFixed = allFixed.reduce((sum, f) => {
     const override = allPayments.find((p) => p.fixed_expense_id === f.id)?.amount_override;
@@ -100,11 +114,16 @@ export default async function DashboardPage({
   const totalExpenses = totalFixed + totalVariable;
   const saldo = totalIncome - totalExpenses;
 
-  const paidCount = allPayments.filter((p) => p.paid).length;
+  const paidCount = allPayments.filter(
+    (p) => p.paid && allFixed.some((f) => f.id === p.fixed_expense_id)
+  ).length;
 
   // saldo entre o casal (considera gastos fixos + transações do mês)
+  // só faz sentido na visão dos dois juntos
+  const showCouple = allProfiles.length === 2 && !personId;
+
   let balance = 0;
-  if (allProfiles.length === 2) {
+  if (showCouple) {
     const [profileA, profileB] = allProfiles;
 
     const fixedEntries = allFixed.map((f) => {
@@ -131,7 +150,7 @@ export default async function DashboardPage({
 
   // histórico de saldo (últimos 6 meses, incluindo o atual) para o gráfico
   let balanceHistory: BalancePoint[] = [];
-  if (allProfiles.length === 2) {
+  if (showCouple) {
     const [profileA, profileB] = allProfiles;
     const allFixedEver = (allFixedExpensesEver ?? []) as FixedExpense[];
     const allPaymentsHistory = (paymentsHistory ?? []) as FixedExpensePayment[];
@@ -198,6 +217,9 @@ export default async function DashboardPage({
 
   const aiSummary = [
     `Mês de referência: ${monthLabel(monthRef)}.`,
+    person
+      ? `Esta é a visão individual de ${person.name} — só os lançamentos dela/dele. Fale diretamente com ${person.name}.`
+      : "Esta é a visão do casal — os lançamentos dos dois somados.",
     `Receitas: ${formatCurrency(totalIncome)} (renda fixa ${formatCurrency(
       totalFixedIncome
     )}, avulsas ${formatCurrency(totalTransactionIncome)}).`,
@@ -207,7 +229,7 @@ export default async function DashboardPage({
     } lançamentos.`,
     `Total de gastos: ${formatCurrency(totalExpenses)}.`,
     `Saldo do mês: ${formatCurrency(saldo)} (${savingsRate.toFixed(0)}% da receita).`,
-    allProfiles.length === 2
+    showCouple
       ? balance === 0
         ? "Entre o casal as contas estão equilibradas."
         : balance > 0
@@ -228,10 +250,19 @@ export default async function DashboardPage({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold capitalize">{monthLabel(monthRef)}</h1>
-          <p className="text-sm text-muted">Visão geral das finanças do casal</p>
+          <p className="text-sm text-muted">
+            {person ? `Visão de ${person.name}` : "Visão geral das finanças do casal"}
+          </p>
         </div>
-        <MonthNav month={monthRef} basePath="/dashboard" />
+        <MonthNav month={monthRef} basePath="/dashboard" person={personId} />
       </div>
+
+      <PersonNav
+        profiles={allProfiles}
+        person={personId}
+        month={monthRef}
+        basePath="/dashboard"
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card index={0} label="Receitas" value={totalIncome} tone="income" />
@@ -240,9 +271,10 @@ export default async function DashboardPage({
         <Card index={3} label="Saldo do mês" value={saldo} tone={saldo >= 0 ? "income" : "expense"} />
       </div>
 
-      <AiInsights summary={aiSummary} />
+      {/* key: troca de mês/pessoa descarta a análise antiga */}
+      <AiInsights key={aiSummary} summary={aiSummary} />
 
-      {allProfiles.length === 2 && (
+      {showCouple && (
         <div className="fade-in-up rounded-3xl border border-border bg-surface p-5" style={{ animationDelay: "160ms" }}>
           <h2 className="mb-2 text-sm font-medium text-muted">Saldo entre vocês</h2>
           {balance === 0 ? (
