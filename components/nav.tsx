@@ -115,8 +115,8 @@ export function Nav() {
 
       {/* Bottom tab bar: só no mobile */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 backdrop-blur sm:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface sm:hidden"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.75rem)" }}
       >
         <div className="mx-auto flex max-w-5xl items-stretch justify-between px-1">
           {links.map((link) => {
