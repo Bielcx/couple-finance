@@ -127,13 +127,6 @@ export function Nav() {
                 href={link.href}
                 className="relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors active:scale-90 active:text-primary"
               >
-                {active && (
-                  <motion.span
-                    layoutId="nav-active-dot"
-                    className="absolute top-1 h-1 w-1 rounded-full bg-primary"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                  />
-                )}
                 <link.Icon className={`h-5 w-5 transition-colors ${active ? "text-primary" : "text-muted"}`} />
                 <span className={active ? "text-primary" : "text-muted"}>{link.short}</span>
               </Link>
