@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Users } from "lucide-react";
+import { LinkPending } from "./link-pending";
 import { pageHref } from "@/lib/utils";
 import type { Profile } from "@/lib/types";
 
@@ -46,6 +47,7 @@ export function PersonNav({
               <Users className="h-3.5 w-3.5" />
             )}
             <span className="max-w-[90px] truncate">{option.label}</span>
+            <LinkPending />
           </Link>
         );
       })}

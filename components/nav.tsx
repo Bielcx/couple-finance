@@ -31,7 +31,10 @@ export function Nav() {
   return (
     <>
       {/* Topo: sempre visível. Nav horizontal só aparece em telas sm+ */}
-      <header className="sticky top-0 z-20 bg-surface/90 backdrop-blur">
+      <header
+        className="sticky top-0 z-20 bg-surface/90 backdrop-blur"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <PiggyBank className="h-5 w-5 text-primary" />
@@ -122,7 +125,7 @@ export function Nav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors"
+                className="relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors active:scale-90 active:text-primary"
               >
                 {active && (
                   <motion.span
