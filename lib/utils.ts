@@ -218,3 +218,17 @@ export function calculateBalance(
 
   return balance;
 }
+
+/**
+ * Lê um valor em reais digitado à mão. O teclado numérico do celular oferece
+ * vírgula, e Number("10,50") é NaN — daí o campo aceitar texto e a normalização
+ * acontecer aqui. Também tolera o separador de milhar ("1.234,56").
+ */
+export function parseAmount(input: FormDataEntryValue | null): number {
+  const raw = String(input ?? "").trim();
+  if (!raw) return NaN;
+  const normalized = raw.includes(",")
+    ? raw.replace(/\./g, "").replace(",", ".")
+    : raw;
+  return Number(normalized);
+}

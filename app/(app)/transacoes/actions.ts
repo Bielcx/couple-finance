@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { parseAmount } from "@/lib/utils";
 import type { SplitType, TransactionType } from "@/lib/types";
 
 export async function createTransaction(formData: FormData) {
@@ -9,7 +10,9 @@ export async function createTransaction(formData: FormData) {
 
   const type = formData.get("type") as TransactionType;
   const description = formData.get("description") as string;
-  const amount = Number(formData.get("amount"));
+  const amount = parseAmount(formData.get("amount"));
+  // o campo aceita texto para o teclado do celular poder mandar vírgula
+  if (!Number.isFinite(amount) || amount <= 0) return;
   const category_id = (formData.get("category_id") as string) || null;
   const paid_by = formData.get("paid_by") as string;
   const split_type = (formData.get("split_type") as SplitType) || "50_50";
